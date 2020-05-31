@@ -14,15 +14,15 @@ namespace _1_InputOutput.Example
             
             // We do this with Console.WriteLine and Console.ReadLine
 
-            Console.ForegroundColor = ConsoleColor.Red;
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("This is some output! Hello :)"); // Output something!
             Console.WriteLine();                                // Output a blank line
 
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Next, type some Input please, followed by the Enter key:"); // This is more Output - we want to prompt you to type some input next
             
-            var input = Console.ReadLine();                     // This reads the Input - the keys you type
-            // ^ This is called a "variable" - we are using this  to "store" what you will type
+            string input = Console.ReadLine();                     // This reads the Input - the keys you type
+            //     ^ This is called a "variable" - we are using this  to "store" what you will type
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("You typed: " + input);           // This Outputs what you Input!
