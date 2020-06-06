@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace _0_Introduction.RunnableExample
 {
@@ -21,7 +20,7 @@ namespace _0_Introduction.RunnableExample
             s_OrigFore = Console.ForegroundColor;
             Console.CursorVisible = false;
 
-            //DisplayHello();
+            DisplayHello();
             (s_Rows, s_Cols) = DrawPane();
             BounceBall();
         }
@@ -146,34 +145,21 @@ namespace _0_Introduction.RunnableExample
             var mainColour = Console.BackgroundColor;
 
             const int rows = 20;
-
-            const int startFreq = 150;
-            const int startInterval = 200;
-            const int maxFreq = 1000;
-            //const int minInterval = 50;
-            //const int stepFreq = 100;          
             
             const int loadTimeMs = 3000;
             var cols = Console.WindowWidth - 1;
             var totalCells = cols * rows;
-            const int beepEveryCell = 10;
-            var beepPoints = totalCells / beepEveryCell;
 
             var timeIntervalMs = loadTimeMs / totalCells;
-            var stepFreq = (maxFreq - startFreq) / beepPoints;
-            //var stepInterval = (startInterval - minInterval) / beepPoints;
 
             var cell = 0;
             for (var row = 0; row <= rows; row++)
             { 
                 for (var col = 0; col <= cols; col++)
                 {
-                    //if (cell % 2 == 0)
                     Console.BackgroundColor = ConsoleColor.Magenta;
                     Console.Write(" ");
                     Thread.Sleep(timeIntervalMs);
-                    //if (cell % beepEveryCell == 0)
-                    //    Console.Beep(startFreq + (cell * stepFreq), startInterval);// - (cell * stepInterval));
                     cell ++;
                 }
             }
