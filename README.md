@@ -14,6 +14,8 @@ Explain that this kind of programming is a basic Console App - Their parents pro
 3. Functions and how they work. e.g. Math functions, Random
 4. Activity: Write a program that outputs what was input 3 times in different colours and exits when the user inputs the letter X.
 5. Conditional logic - if
-6. Basic For Loops
-7. Some kind of game / visual! - Putting it all together
-8. What is True/False - logical statements and how they resolve
+6. Types - string (text) or integer (number)
+7. Activity: Guess the number between 1 and 10
+8. Basic For Loops
+9. Some kind of game / visual! - Putting it all together
+10. What is True/False - logical statements and how they resolve

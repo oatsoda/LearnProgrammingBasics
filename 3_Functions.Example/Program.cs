@@ -21,16 +21,28 @@ namespace _3_Functions.Example
             string input = "";
             while (input.ToLower() != "exit")
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("Please enter some input, or type 'exit' to exit:");
-                input = Console.ReadLine();
+                input = AskForInput("Please enter some input, or type 'exit' to exit:", ConsoleColor.Cyan);
 
                 // Here we run the function to add stars to your input
                 var starredInput = AddStars(input);
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Your starred input: " + starredInput);
+                WriteLine("Your starred input: " + starredInput, ConsoleColor.Green);
             }
+        }
+
+        // We've also created two other functions
+        // One to set the colour and write a line of output...
+        static void WriteLine(string output, ConsoleColor colour)
+        {
+            Console.ForegroundColor = colour;
+            Console.WriteLine(output);
+        }
+
+        // And one to ask for input
+        static string AskForInput(string output, ConsoleColor colour)
+        {
+            WriteLine(output, colour);
+            return Console.ReadLine();
         }
     }
 }
