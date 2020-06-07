@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace _0_Introduction.RunnableExample
 {
@@ -11,30 +14,101 @@ namespace _0_Introduction.RunnableExample
         static int s_Rows;
         static int s_Cols;
 
-        const ConsoleColor s_Primary = ConsoleColor.Magenta;
+        static readonly ConsoleColor s_Primary = ConsoleColor.Magenta;
+        static ConsoleColor s_BallColour;
+        static int s_BallDrawInteval = 50;
 
+        static object s_Locker = new object();
 
         static void Main(string[] args)
         {
-            s_OrigBack = Console.BackgroundColor;
+            s_OrigBack = s_BallColour = Console.BackgroundColor;
             s_OrigFore = Console.ForegroundColor;
             Console.CursorVisible = false;
 
             DisplayHello();
             (s_Rows, s_Cols) = DrawPane();
-            BounceBall();
+
+            Console.SetCursorPosition(0, s_Rows + 1);
+            SetPrimary();
+            Say("Press Enter to launch a ball. Press 'H' to remove a ball.");
+            Console.SetCursorPosition(0, s_Rows + 2);
+            Say("Press 'Y', 'B', 'C' or 'R' to change ball colour.");
+            Console.SetCursorPosition(0, s_Rows + 3);
+            Say("Press 'U' or 'D' to change speed.  Press 'X' to exit.");
+
+            
+            var ballTasks = new List<Tuple<Task, CancellationTokenSource>>();
+            ConsoleKeyInfo input = default;
+
+            while (true)
+            {
+                if (input.Key == ConsoleKey.Enter && ballTasks.Count < 10)
+                {
+                    var tokenSource = new CancellationTokenSource();
+                    var task = Task.Run(() => BounceBall(tokenSource.Token), tokenSource.Token);
+                    ballTasks.Add(new Tuple<Task, CancellationTokenSource>(task, tokenSource));
+                }
+                else if (ballTasks.Count > 1 && (input.KeyChar == 'h' || input.KeyChar == 'H'))
+                {
+                    var t = ballTasks.Last();
+                    t.Item2.Cancel();
+                    ballTasks.Remove(t);
+                }
+
+                else if (input.KeyChar == 'x' || input.KeyChar == 'X')
+                    break;
+
+                else if (input.KeyChar == 'y' || input.KeyChar == 'Y')
+                    s_BallColour = ConsoleColor.Yellow;
+
+                else if (input.KeyChar == 'b' || input.KeyChar == 'B')
+                    s_BallColour = s_OrigBack;
+
+                else if (input.KeyChar == 'c' || input.KeyChar == 'C')
+                    s_BallColour = ConsoleColor.Cyan;
+
+                else if (input.KeyChar == 'r' || input.KeyChar == 'R')
+                    s_BallColour = ConsoleColor.Red;
+
+                else if (s_BallDrawInteval > 40 && (input.KeyChar == 'u' || input.KeyChar == 'U'))
+                    s_BallDrawInteval -= 5;
+
+                else if (s_BallDrawInteval < 100 && (input.KeyChar == 'd' || input.KeyChar == 'D'))
+                    s_BallDrawInteval += 5;
+
+                input = Console.ReadKey(true);
+            }
+
+
+            if (ballTasks.Any())
+            {
+                ballTasks.ForEach(t => t.Item2.Cancel());
+                Task.WaitAll(ballTasks.Select(t => t.Item1).ToArray());
+            }
+
+            // Exiting
+            Console.SetCursorPosition(0, s_Rows + 4);
+            SetPrimary();
+            Say("GOODBYE");
+            Console.WriteLine();
+            Console.WriteLine();
         }
 
-        static void BounceBall()
+        static void BounceBall(CancellationToken cancellationToken)
         {
             var s = new Random().Next(0, s_Cols);
-            MoveBall(s, 0, true, true);
+            MoveBall(s, 0, true, true, cancellationToken);
         }
 
-        static void MoveBall(int currCol, int currRow, bool right, bool down)
+        static void MoveBall(int currCol, int currRow, bool right, bool down, CancellationToken cancellationToken)
         {
             DrawBall(currCol, currRow, false);
-            
+
+            // Always cancel after removing previous ball location so we don't end up with stuck balls!
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             if (currCol == s_Cols && right)
             { 
                 right = false;
@@ -45,7 +119,7 @@ namespace _0_Introduction.RunnableExample
             { 
                 right = true;
                 currCol++;
-                Console.Beep(600, 50);
+                Console.Beep(500, 50);
             }
             else if (right)
             {
@@ -66,7 +140,7 @@ namespace _0_Introduction.RunnableExample
             {
                 down = true;
                 currRow++;
-                Console.Beep(500, 50);
+                Console.Beep(600, 50);
             }
             else if (down)
             {
@@ -78,15 +152,21 @@ namespace _0_Introduction.RunnableExample
             }
 
             DrawBall(currCol, currRow, true);
-            Thread.Sleep(50);
-            MoveBall(currCol, currRow, right, down);
+
+            if (!cancellationToken.IsCancellationRequested) // Only pause if not cancelled
+                Thread.Sleep(s_BallDrawInteval);
+
+            MoveBall(currCol, currRow, right, down, cancellationToken);
         }
 
         static void DrawBall(int col, int row, bool show)
         {
-            Console.SetCursorPosition(col, row);
-            Console.BackgroundColor = show ? s_OrigBack : s_Primary;
-            Console.Write(" ");
+            lock (s_Locker)
+            { 
+                Console.SetCursorPosition(col, row);
+                Console.BackgroundColor = show ? s_BallColour : s_Primary;
+                Console.Write(" ");
+            }
         }
 
         static void SetOrig()
@@ -97,6 +177,7 @@ namespace _0_Introduction.RunnableExample
 
         static void SetPrimary()
         {
+            Console.BackgroundColor = s_OrigBack;
             Console.ForegroundColor = s_Primary;
         }
 
@@ -168,20 +249,5 @@ namespace _0_Introduction.RunnableExample
 
             return (rows, cols);
         }
-
-        // Write a line of output in a chosen colour
-        static void WriteLine(string output, ConsoleColor colour)
-        {
-            Console.ForegroundColor = colour;
-            Console.WriteLine(output);
-        }
-
-        // Ask for some input using a chosen colour
-        static string AskForInput(string output, ConsoleColor colour)
-        {
-            WriteLine(output, colour);
-            return Console.ReadLine();
-        }
     }
-
 }
